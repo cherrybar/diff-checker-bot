@@ -1,8 +1,8 @@
 import { IMessageActionPayload } from '../types';
 
-export default async function ({ chatId, bot }: IMessageActionPayload) {
+export async function removeFromWatching({ msg, bot }: IMessageActionPayload) {
 	await bot.sendMessage(
-		chatId,
+		msg.chat.id,
 		`Укажите пути к файлам, которые необходимо удалить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: src/components/main.vue\n\rsrc/components`,
 	);
 }

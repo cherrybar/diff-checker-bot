@@ -1,5 +1,5 @@
 import { IMessageActionPayload } from '../types';
 
-export default async function ({ chatId, bot }: IMessageActionPayload) {
-	await bot.sendMessage(chatId, 'Запускаем проверку...');
+export async function runCheck({ msg, bot }: IMessageActionPayload) {
+	await bot.sendMessage(msg.chat.id, 'Запускаем проверку...');
 }

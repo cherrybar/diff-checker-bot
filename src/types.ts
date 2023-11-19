@@ -1,10 +1,18 @@
 import TelegramBot from 'node-telegram-bot-api';
 
 export enum Button {
-	AddToWatching = 'add',
-	RemoveFromWatching = 'remove',
-	ShowWatching = 'show',
-	Check = 'check',
+	AddToWatching = '/add',
+	RemoveFromWatching = '/remove',
+	ShowWatching = '/show',
+	Check = '/check',
+	UpdateUsername = '/updateusername',
+}
+
+export enum ChatState {
+	Default = 'default',
+	UsernameValidation = 'username_validation',
+	WaitingForDataToAdd = 'waiting_for_add',
+	WaitingForDataToRemove = 'waiting_for_remove',
 }
 
 export interface IMergeRequest {
@@ -122,7 +130,14 @@ export interface IMergeRequestWithDiffs extends IMergeRequestDiff {
 }
 
 export interface IMessageActionPayload {
-	chatId: number;
-	message?: TelegramBot.Message;
+	msg: TelegramBot.Message;
 	bot: TelegramBot;
+}
+
+export interface IDbUser {
+	_id: string;
+	telegramId: string;
+	gitlabUsername?: string;
+	watchingPaths: string[];
+	state: ChatState;
 }

@@ -1,5 +1,11 @@
 import { IMessageActionPayload } from '../types';
+import User from '../models/user';
 
-export default async function ({ chatId, bot }: IMessageActionPayload) {
-	await bot.sendMessage(chatId, 'Список файлов: ');
+export async function showList({ msg, bot }: IMessageActionPayload) {
+	const chatId = msg.chat.id;
+	const user = await User.findById(chatId);
+	if (!user) {
+		return;
+	}
+	await bot.sendMessage(chatId, `Список файлов:\n\r${user.watchingPaths.join('\n\r')}`);
 }
