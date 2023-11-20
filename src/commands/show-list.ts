@@ -7,5 +7,5 @@ export async function showList({ msg, bot }: IMessageActionPayload) {
 	if (!user) {
 		return;
 	}
-	await bot.sendMessage(chatId, `Список файлов:\n\r${user.watchingPaths.join('\n\r')}`);
+	await bot.sendMessage(chatId, `ℹ️ Список файлов:\n\n${user.watchingPaths.join('\n\r')}`);
 }

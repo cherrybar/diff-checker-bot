@@ -5,7 +5,7 @@ import { HydratedDocument } from 'mongoose';
 
 export async function updateUsername({ msg, bot }: IMessageActionPayload) {
 	const chatId = msg.chat.id;
-	await bot.sendMessage(chatId, 'Укажи свой username в gitlab');
+	await bot.sendMessage(chatId, 'ℹ️ Укажи свой username в gitlab');
 	console.log(await User.find());
 	const user = await User.findById(chatId);
 
@@ -31,11 +31,11 @@ export async function updateUsernameResponseHandler({
 	callback: (chatId: number, bot: TelegramBot) => void;
 }) {
 	if (!username.match(/^[a-zA-Z0-9_.-]*$/)) {
-		bot.sendMessage(chatId, 'Введен некорректный username');
+		bot.sendMessage(chatId, '⛔️ Введен некорректный username');
 		return;
 	}
 	await user.updateOne({ state: ChatState.Default, gitlabUsername: username });
-	await bot.sendMessage(chatId, `Username ${username} сохранен`);
+	await bot.sendMessage(chatId, `✅ Username ${username} сохранен`);
 	callback(chatId, bot);
 	return;
 }

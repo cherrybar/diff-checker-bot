@@ -8,7 +8,7 @@ export async function addToWatching({ msg, bot }: IMessageActionPayload) {
 
 	await bot.sendMessage(
 		chatId,
-		`Укажите пути к файлам, которые необходимо добавить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: src/components/main.vue\n\rsrc/components`,
+		`Укажи пути к файлам, которые необходимо добавить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: src/components/main.vue\n\rsrc/components`,
 	);
 	const user = await User.findById(chatId);
 	if (!user) {
@@ -23,9 +23,9 @@ export async function addToWatchingResponseHandler({ text, bot, chatId, user }: 
 	const result = await user.updateOne({ $addToSet: { watchingPaths: { $each: paths } } });
 
 	if (result.modifiedCount === 1) {
-		bot.sendMessage(chatId, 'Список файлов обновлен');
+		bot.sendMessage(chatId, '✅ Список файлов обновлен');
 	} else if (result.matchedCount === 1) {
-		bot.sendMessage(chatId, 'Ошибка. Такой файл уже есть в списке');
+		bot.sendMessage(chatId, '⛔️ Ошибка. Такой файл уже есть в списке');
 	}
 	await user.updateOne({ state: ChatState.Default });
 }

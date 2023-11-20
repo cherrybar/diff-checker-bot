@@ -5,7 +5,7 @@ export async function removeFromWatching({ msg, bot }: IMessageActionPayload) {
 	const chatId = msg.chat.id;
 	await bot.sendMessage(
 		msg.chat.id,
-		`Укажите пути к файлам, которые необходимо удалить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: src/components/main.vue\n\rsrc/components`,
+		`ℹ️ Укажи пути к файлам, которые необходимо удалить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: src/components/main.vue\n\rsrc/components`,
 	);
 
 	const user = await User.findById(chatId);
@@ -24,9 +24,9 @@ export async function removeFromWatchingResponseHandler({ text, bot, chatId, use
 	console.log({ result });
 
 	if (result.modifiedCount === 1) {
-		bot.sendMessage(chatId, 'Список файлов обновлен');
+		bot.sendMessage(chatId, '✅ Список файлов обновлен');
 	} else if (result.matchedCount === 1) {
-		bot.sendMessage(chatId, 'Ошибка. Такого файла нет в списке');
+		bot.sendMessage(chatId, '⛔️ Ошибка. Такого файла нет в списке');
 	}
 	await user.updateOne({ state: ChatState.Default });
 }
