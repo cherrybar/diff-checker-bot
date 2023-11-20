@@ -1,4 +1,4 @@
-import { ChatState, IDbUser, IMessageActionPayload } from '../types';
+import { Button, ChatState, IDbUser, IMessageActionPayload } from '../types';
 import TelegramBot from 'node-telegram-bot-api';
 import { HydratedDocument } from 'mongoose';
 import User from '../models/user';
@@ -8,8 +8,14 @@ export async function addToWatching({ msg, bot }: IMessageActionPayload) {
 
 	await bot.sendMessage(
 		chatId,
-		`Укажи пути к файлам, которые необходимо добавить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: src/components/main.vue\n\rsrc/components`,
+		'ℹ️ Укажи пути к файлам, которые необходимо добавить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: src/components/main.vue\n\rsrc/components',
+		{
+			reply_markup: {
+				inline_keyboard: [[{ text: 'Отмена', callback_data: Button.Cancel }]],
+			},
+		},
 	);
+
 	const user = await User.findById(chatId);
 	if (!user) {
 		return;
@@ -22,10 +28,7 @@ export async function addToWatchingResponseHandler({ text, bot, chatId, user }: 
 
 	const result = await user.updateOne({ $addToSet: { watchingPaths: { $each: paths } } });
 
-	if (result.modifiedCount === 1) {
-		bot.sendMessage(chatId, '✅ Список файлов обновлен');
-	} else if (result.matchedCount === 1) {
-		bot.sendMessage(chatId, '⛔️ Ошибка. Такой файл уже есть в списке');
-	}
+	const msgText = result.modifiedCount === 1 ? '✅ Список файлов обновлен' : '⛔️ Ошибка. Такой файл уже есть в списке';
+	await bot.sendMessage(chatId, msgText);
 	await user.updateOne({ state: ChatState.Default });
 }

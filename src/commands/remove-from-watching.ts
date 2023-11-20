@@ -1,13 +1,13 @@
-import { ChatState, IMessageActionPayload } from '../types';
+import { Button, ChatState, IMessageActionPayload } from '../types';
 import User from '../models/user';
 
 export async function removeFromWatching({ msg, bot }: IMessageActionPayload) {
 	const chatId = msg.chat.id;
-	await bot.sendMessage(
-		msg.chat.id,
-		`ℹ️ Укажи пути к файлам, которые необходимо удалить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: src/components/main.vue\n\rsrc/components`,
-	);
-
+	await bot.sendMessage(chatId, 'ℹ️ Укажи пути, которые необходимо удалить', {
+		reply_markup: {
+			inline_keyboard: [[{ text: 'Отмена', callback_data: Button.Cancel }]],
+		},
+	});
 	const user = await User.findById(chatId);
 
 	if (!user) {
@@ -21,12 +21,9 @@ export async function removeFromWatchingResponseHandler({ text, bot, chatId, use
 	const paths = text.split('\n');
 
 	const result = await user.updateOne({ $pull: { watchingPaths: { $in: paths } } });
-	console.log({ result });
 
-	if (result.modifiedCount === 1) {
-		bot.sendMessage(chatId, '✅ Список файлов обновлен');
-	} else if (result.matchedCount === 1) {
-		bot.sendMessage(chatId, '⛔️ Ошибка. Такого файла нет в списке');
-	}
+	const resultText = result.modifiedCount === 1 ? '✅ Список файлов обновлен' : '⛔️ Ошибка. Такого файла нет в списке';
+	await bot.sendMessage(chatId, resultText);
+
 	await user.updateOne({ state: ChatState.Default });
 }

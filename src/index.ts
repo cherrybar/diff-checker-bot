@@ -1,9 +1,9 @@
 import TelegramBot from 'node-telegram-bot-api';
 import mongoose, { HydratedDocument } from 'mongoose';
 import * as process from 'process';
-import { Button, ChatState, IMessageActionPayload } from './types';
+import { Button, ChatState, IMessageActionPayload, IMessageResponseHandlerPayload } from './types';
 import User from './models/user';
-import { addToWatching, addToWatchingResponseHandler, removeFromWatching, showList, runCheck, updateUsername, updateUsernameResponseHandler } from './commands';
+import { addToWatching, addToWatchingResponseHandler, removeFromWatching, showList, runCheck, updateUsername, updateUsernameResponseHandler, cancelCommand } from './commands';
 import { IDbUser } from './types';
 import { removeFromWatchingResponseHandler } from './commands/remove-from-watching';
 
@@ -19,6 +19,13 @@ const actionByChosenButton: Record<Button, (data: IMessageActionPayload) => void
 	[Button.ShowWatching]: showList,
 	[Button.Check]: runCheck,
 	[Button.UpdateUsername]: updateUsername,
+	[Button.Cancel]: cancelCommand,
+};
+
+const responseHandlerByState: Partial<Record<ChatState, (data: IMessageResponseHandlerPayload) => void>> = {
+	[ChatState.WaitingForDataToAdd]: addToWatchingResponseHandler,
+	[ChatState.WaitingForDataToRemove]: removeFromWatchingResponseHandler,
+	[ChatState.UsernameValidation]: updateUsernameResponseHandler,
 };
 
 async function handleButtonClick(data: IMessageActionPayload, action: Button) {
@@ -52,21 +59,12 @@ async function handleUserResponse(user: HydratedDocument<IDbUser>, msg: Telegram
 	const text = msg.text || '';
 	const chatId = msg.chat.id;
 
-	switch (user.state) {
-		case ChatState.UsernameValidation:
-			updateUsernameResponseHandler({ user, username: text, bot, chatId, callback: sendChooseActionMsg });
-			break;
+	const responseHandler = responseHandlerByState[user.state];
 
-		case ChatState.WaitingForDataToAdd:
-			addToWatchingResponseHandler({ user, text, bot, chatId });
-			break;
-
-		case ChatState.WaitingForDataToRemove:
-			removeFromWatchingResponseHandler({ user, text, bot, chatId });
-			break;
-
-		default:
-			sendChooseActionMsg(chatId, bot);
+	if (responseHandler) {
+		responseHandler({ user, text, bot, chatId });
+	} else {
+		sendChooseActionMsg(chatId, bot);
 	}
 }
 
@@ -100,12 +98,6 @@ async function main() {
 	bot.on('message', async msg => {
 		const text = msg.text;
 
-		if (text === 'del') {
-			await User.deleteMany({});
-			const users = await User.find();
-			console.log({ users });
-		}
-
 		if (!text) {
 			return;
 		}
@@ -113,8 +105,13 @@ async function main() {
 		const chatId = msg.chat.id;
 
 		if (text === '/start') {
-			await bot.sendMessage(chatId, 'Привет!');
-			updateUsername({ msg, bot });
+			await bot.sendMessage(chatId, 'Привет!👋');
+			const user = await User.findById(chatId);
+			if (!user) {
+				updateUsername({ msg, bot });
+			} else {
+				sendChooseActionMsg(chatId, bot);
+			}
 			return;
 		}
 
@@ -124,6 +121,7 @@ async function main() {
 		}
 
 		const user = await User.findById(chatId);
+
 		if (user) {
 			handleUserResponse(user, msg);
 		} else {

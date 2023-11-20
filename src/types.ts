@@ -1,11 +1,13 @@
 import TelegramBot from 'node-telegram-bot-api';
+import { HydratedDocument } from 'mongoose';
 
 export enum Button {
 	AddToWatching = '/add',
 	RemoveFromWatching = '/remove',
 	ShowWatching = '/show',
 	Check = '/check',
-	UpdateUsername = '/updateusername',
+	UpdateUsername = '/update-username',
+	Cancel = '/cancel',
 }
 
 export enum ChatState {
@@ -132,6 +134,13 @@ export interface IMergeRequestWithDiffs extends IMergeRequestDiff {
 export interface IMessageActionPayload {
 	msg: TelegramBot.Message;
 	bot: TelegramBot;
+}
+
+export interface IMessageResponseHandlerPayload {
+	text: string;
+	chatId: number;
+	bot: TelegramBot;
+	user: HydratedDocument<IDbUser>;
 }
 
 export interface IDbUser {
