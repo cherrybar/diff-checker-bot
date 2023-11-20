@@ -8,6 +8,7 @@ const userSchema: Schema = new Schema({
 	watchingPaths: [{ type: String }],
 	state: { type: typeof ChatState },
 	excludedProjects: { type: String },
+	isSubscribed: { type: Boolean },
 });
 
 const User = mongoose.model<IDbUser & Document>('User', userSchema);

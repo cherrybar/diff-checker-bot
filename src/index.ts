@@ -18,6 +18,7 @@ import {
 import { IDbUser } from './types';
 import { removeFromWatchingResponseHandler } from './commands/remove-from-watching';
 import { clearExcludedProjectsList, updateExcludedProjects, updateExcludedProjectsResponseHandler } from './commands/update-excluded-projects';
+import { manageSubscription, manageSubscriptionResponseHandler } from './commands/manage-subscription';
 
 const botToken = process.env.TG_BOT_TOKEN as string;
 const mongodbURI = process.env.MONGODB_URI as string;
@@ -25,7 +26,7 @@ const mongodbURI = process.env.MONGODB_URI as string;
 const bot = new TelegramBot(botToken, { polling: true });
 mongoose.connect(mongodbURI);
 
-const actionByChosenButton: Record<Button, (data: IMessageActionPayload) => void> = {
+const actionByChosenButton: Partial<Record<Button, (data: IMessageActionPayload) => void>> = {
 	[Button.AddToWatching]: addToWatching,
 	[Button.RemoveFromWatching]: removeFromWatching,
 	[Button.ShowWatching]: showList,
@@ -34,6 +35,7 @@ const actionByChosenButton: Record<Button, (data: IMessageActionPayload) => void
 	[Button.Cancel]: cancelCommand,
 	[Button.ExcludedProject]: updateExcludedProjects,
 	[Button.ClearList]: clearExcludedProjectsList,
+	[Button.ManageSubscription]: manageSubscription,
 };
 
 const responseHandlerByState: Partial<Record<ChatState, (data: IMessageResponseHandlerPayload) => void>> = {
@@ -41,6 +43,7 @@ const responseHandlerByState: Partial<Record<ChatState, (data: IMessageResponseH
 	[ChatState.WaitingForDataToRemove]: removeFromWatchingResponseHandler,
 	[ChatState.UsernameValidation]: updateUsernameResponseHandler,
 	[ChatState.WaitingForExcludedProjects]: updateExcludedProjectsResponseHandler,
+	[ChatState.WaitingForSubscriptionToggle]: manageSubscriptionResponseHandler,
 };
 
 async function handleButtonClick(data: IMessageActionPayload, action: Button) {
@@ -49,7 +52,11 @@ async function handleButtonClick(data: IMessageActionPayload, action: Button) {
 		updateUsername(data);
 		return;
 	}
-	actionByChosenButton[action](data);
+
+	const actionHandler = actionByChosenButton[action];
+	if (actionHandler) {
+		actionHandler(data);
+	}
 }
 
 function isPredefinedButton(value: any): value is Button {
@@ -66,6 +73,7 @@ async function sendChooseActionMsg(chatId: number, bot: TelegramBot) {
 				[{ text: 'Показать список наблюдаемых файлов', callback_data: Button.ShowWatching }],
 				[{ text: 'Изменить username', callback_data: Button.UpdateUsername }],
 				[{ text: 'Изменить список проектов-исключений', callback_data: Button.ExcludedProject }],
+				[{ text: 'Управлять подпиской на обновления', callback_data: Button.ManageSubscription }],
 			],
 		},
 	});
@@ -92,6 +100,7 @@ async function main() {
 		{ command: Button.ShowWatching, description: 'Показать список наблюдаемых файлов' },
 		{ command: Button.UpdateUsername, description: 'Изменить username' },
 		{ command: Button.ExcludedProject, description: 'Изменить список проектов-исключений' },
+		{ command: Button.ManageSubscription, description: 'Управлять подпиской на обновления' },
 	];
 
 	bot.setMyCommands(commands);
@@ -158,7 +167,7 @@ async function sendUpdates() {
 }
 
 // at 11 am daily from monday to friday
-schedule.scheduleJob('00 11 * * 1-5', function () {
+schedule.scheduleJob('28 00 * * 1-5', function () {
 	sendUpdates();
 });
 
