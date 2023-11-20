@@ -5,6 +5,7 @@ import { Button, ChatState, IMessageActionPayload } from './types';
 import User from './models/user';
 import { addToWatching, addToWatchingResponseHandler, removeFromWatching, showList, runCheck, updateUsername, updateUsernameResponseHandler } from './commands';
 import { IDbUser } from './types';
+import { removeFromWatchingResponseHandler } from './commands/remove-from-watching';
 
 const botToken = process.env.TG_BOT_TOKEN as string;
 const mongodbURI = process.env.MONGODB_URI as string;
@@ -61,7 +62,7 @@ async function handleUserResponse(user: HydratedDocument<IDbUser>, msg: Telegram
 			break;
 
 		case ChatState.WaitingForDataToRemove:
-			console.log('/remove response handler');
+			removeFromWatchingResponseHandler({ user, text, bot, chatId });
 			break;
 
 		default:
