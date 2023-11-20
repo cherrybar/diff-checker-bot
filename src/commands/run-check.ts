@@ -7,14 +7,18 @@ function extractProjectKey(str: string): string {
 }
 
 export async function runCheck({ chatId, bot, isManual }: IMessageActionPayload & { isManual?: boolean }) {
-	if (isManual) {
-		await bot.sendMessage(chatId, '⏳ Запускаем проверку... Это может занять несколько минут');
-	}
-
 	const user = await User.findById(chatId);
 
 	if (!user) {
 		return;
+	}
+
+	if (isManual) {
+		if (!user.watchingPaths.length) {
+			await bot.sendMessage(chatId, '⚠️ Сначала нужно добавить файлы для наблюдения');
+			return;
+		}
+		await bot.sendMessage(chatId, '⏳ Запускаем проверку... Это может занять несколько минут');
 	}
 
 	const mrList = await fetchAllMrs({ 'not[author_username]': user.gitlabUsername });

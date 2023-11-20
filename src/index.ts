@@ -157,7 +157,7 @@ async function main() {
 }
 
 async function sendUpdates() {
-	const allUsers = await User.find();
+	const allUsers = await User.find({ isSubscribed: true, $where: 'this.watchingPaths.length > 0' });
 
 	const sendMessagesRequests = allUsers.map(user => {
 		runCheck({ chatId: user.telegramId, bot, isManual: false });
@@ -167,7 +167,7 @@ async function sendUpdates() {
 }
 
 // at 11 am daily from monday to friday
-schedule.scheduleJob('28 00 * * 1-5', function () {
+schedule.scheduleJob('00 11 * * 1-5', function () {
 	sendUpdates();
 });
 
