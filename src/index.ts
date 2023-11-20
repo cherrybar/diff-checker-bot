@@ -6,6 +6,7 @@ import User from './models/user';
 import { addToWatching, addToWatchingResponseHandler, removeFromWatching, showList, runCheck, updateUsername, updateUsernameResponseHandler, cancelCommand } from './commands';
 import { IDbUser } from './types';
 import { removeFromWatchingResponseHandler } from './commands/remove-from-watching';
+import { clearExcludedProjectsList, updateExcludedProjects, updateExcludedProjectsResponseHandler } from './commands/update-excluded-projects';
 
 const botToken = process.env.TG_BOT_TOKEN as string;
 const mongodbURI = process.env.MONGODB_URI as string;
@@ -20,12 +21,15 @@ const actionByChosenButton: Record<Button, (data: IMessageActionPayload) => void
 	[Button.Check]: runCheck,
 	[Button.UpdateUsername]: updateUsername,
 	[Button.Cancel]: cancelCommand,
+	[Button.ExcludedProject]: updateExcludedProjects,
+	[Button.ClearList]: clearExcludedProjectsList,
 };
 
 const responseHandlerByState: Partial<Record<ChatState, (data: IMessageResponseHandlerPayload) => void>> = {
 	[ChatState.WaitingForDataToAdd]: addToWatchingResponseHandler,
 	[ChatState.WaitingForDataToRemove]: removeFromWatchingResponseHandler,
 	[ChatState.UsernameValidation]: updateUsernameResponseHandler,
+	[ChatState.WaitingForExcludedProjects]: updateExcludedProjectsResponseHandler,
 };
 
 async function handleButtonClick(data: IMessageActionPayload, action: Button) {
@@ -50,6 +54,7 @@ async function sendChooseActionMsg(chatId: number, bot: TelegramBot) {
 				[{ text: 'Удалить файлы из наблюдаемых', callback_data: Button.RemoveFromWatching }],
 				[{ text: 'Показать список наблюдаемых файлов', callback_data: Button.ShowWatching }],
 				[{ text: 'Изменить username', callback_data: Button.UpdateUsername }],
+				[{ text: 'Изменить список проектов-исключений', callback_data: Button.ExcludedProject }],
 			],
 		},
 	});
@@ -75,6 +80,7 @@ async function main() {
 		{ command: Button.RemoveFromWatching, description: 'Удалить файлы из наблюдаемых' },
 		{ command: Button.ShowWatching, description: 'Показать список наблюдаемых файлов' },
 		{ command: Button.UpdateUsername, description: 'Изменить username' },
+		{ command: Button.ExcludedProject, description: 'Изменить список проектов-исключений' },
 	];
 
 	bot.setMyCommands(commands);

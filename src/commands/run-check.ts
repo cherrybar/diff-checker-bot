@@ -2,6 +2,10 @@ import { IMergeRequest, IMessageActionPayload } from '../types';
 import { fetchAllMrs, fetchListDiffData } from '../services/gitlab';
 import User from '../models/user';
 
+function extractProjectKey(str: string): string {
+	return str.match(/\w{1,10}/)?.[0] || '';
+}
+
 export async function runCheck({ msg, bot }: IMessageActionPayload) {
 	const chatId = msg.chat.id;
 
@@ -20,16 +24,23 @@ export async function runCheck({ msg, bot }: IMessageActionPayload) {
 
 	const watchingDirectories = user.watchingPaths.filter(path => !path.match(/^(.*\/)?([^/]+)\.(ts|vue)$/i));
 	const watchingFiles = user.watchingPaths.filter(path => !watchingDirectories.includes(path));
+	const excludedProjects = user.excludedProjects.split(', ');
 
-	data.forEach(mr => {
-		mr.diff.forEach(diff => {
+	data.forEach(mrWithDiffs => {
+		const mr = mrList.find(el => el.iid === mrWithDiffs.iid)!;
+		const projectKey = extractProjectKey(mr.title);
+		if (excludedProjects.includes(projectKey)) {
+			return;
+		}
+
+		mrWithDiffs.diff.forEach(diff => {
 			if (watchingFiles.includes(diff.old_path)) {
-				result.add(mrList.find(el => el.iid === mr.iid)!);
+				result.add(mr);
 				return;
 			}
 
 			if (watchingDirectories.some(path => diff.old_path.startsWith(path))) {
-				result.add(mrList.find(el => el.iid === mr.iid)!);
+				result.add(mr);
 			}
 		});
 	});
@@ -41,5 +52,5 @@ export async function runCheck({ msg, bot }: IMessageActionPayload) {
 	const textData = Array.from(result)
 		.map((mr, index) => `${index + 1}) <a href="${mr.web_url}">${mr.title}</a>`)
 		.join('\n');
-	await bot.sendMessage(chatId, `🎉 Список mr: \n ${textData}`, { parse_mode: 'HTML' });
+	await bot.sendMessage(chatId, `🎉 Список mr:\n${textData}`, { parse_mode: 'HTML' });
 }

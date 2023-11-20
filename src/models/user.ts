@@ -7,6 +7,7 @@ const userSchema: Schema = new Schema({
 	gitlabUsername: { type: String },
 	watchingPaths: [{ type: String }],
 	state: { type: typeof ChatState },
+	excludedProjects: { type: String },
 });
 
 const User = mongoose.model<IDbUser & Document>('User', userSchema);

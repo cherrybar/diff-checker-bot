@@ -6,8 +6,10 @@ export enum Button {
 	RemoveFromWatching = '/remove',
 	ShowWatching = '/show',
 	Check = '/check',
-	UpdateUsername = '/update',
+	UpdateUsername = '/update_username',
+	ExcludedProject = '/exclude_projects',
 	Cancel = '/cancel',
+	ClearList = '/clear_list',
 }
 
 export enum ChatState {
@@ -15,6 +17,7 @@ export enum ChatState {
 	UsernameValidation = 'username_validation',
 	WaitingForDataToAdd = 'waiting_for_add',
 	WaitingForDataToRemove = 'waiting_for_remove',
+	WaitingForExcludedProjects = 'waiting_for_excluded_projects',
 }
 
 export interface IMergeRequest {
@@ -150,4 +153,5 @@ export interface IDbUser {
 	gitlabUsername?: string;
 	watchingPaths: string[];
 	state: ChatState;
+	excludedProjects: string;
 }
