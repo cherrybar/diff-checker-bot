@@ -28,4 +28,5 @@ export async function removeFromWatchingResponseHandler({ text, bot, chatId, use
 	} else if (result.matchedCount === 1) {
 		bot.sendMessage(chatId, 'Ошибка. Такого файла нет в списке');
 	}
+	await user.updateOne({ state: ChatState.Default });
 }
