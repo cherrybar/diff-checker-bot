@@ -3,9 +3,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import { HydratedDocument } from 'mongoose';
 import User from '../models/user';
 
-export async function updateExcludedProjects({ msg, bot }: IMessageActionPayload) {
-	const chatId = msg.chat.id;
-
+export async function updateExcludedProjects({ chatId, bot }: IMessageActionPayload) {
 	await bot.sendMessage(chatId, 'ℹ️ Укажи через запятую ключи проектов, mr которых нужно исключать при поиске. Например:\nCTSMM, PCRD\n', {
 		reply_markup: {
 			inline_keyboard: [
@@ -24,9 +22,7 @@ export async function updateExcludedProjects({ msg, bot }: IMessageActionPayload
 	await user.updateOne({ state: ChatState.WaitingForExcludedProjects });
 }
 
-export async function clearExcludedProjectsList({ msg, bot }: IMessageActionPayload) {
-	const chatId = msg.chat.id;
-
+export async function clearExcludedProjectsList({ chatId, bot }: IMessageActionPayload) {
 	const user = await User.findById(chatId);
 	if (!user) {
 		return;

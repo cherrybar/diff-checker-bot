@@ -1,8 +1,7 @@
 import { ChatState, IMessageActionPayload } from '../types';
 import User from '../models/user';
 
-export async function cancelCommand({ msg, bot }: IMessageActionPayload) {
-	const chatId = msg.chat.id;
+export async function cancelCommand({ chatId, bot }: IMessageActionPayload) {
 	await bot.sendMessage(chatId, 'Операция отменена');
 	const user = await User.findById(chatId);
 	if (!user) {

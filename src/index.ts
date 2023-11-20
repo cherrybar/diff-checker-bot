@@ -1,9 +1,20 @@
 import TelegramBot from 'node-telegram-bot-api';
 import mongoose, { HydratedDocument } from 'mongoose';
 import * as process from 'process';
+import schedule from 'node-schedule';
 import { Button, ChatState, IMessageActionPayload, IMessageResponseHandlerPayload } from './types';
 import User from './models/user';
-import { addToWatching, addToWatchingResponseHandler, removeFromWatching, showList, runCheck, updateUsername, updateUsernameResponseHandler, cancelCommand } from './commands';
+import {
+	addToWatching,
+	addToWatchingResponseHandler,
+	removeFromWatching,
+	showList,
+	runCheck,
+	runManualCheck,
+	updateUsername,
+	updateUsernameResponseHandler,
+	cancelCommand,
+} from './commands';
 import { IDbUser } from './types';
 import { removeFromWatchingResponseHandler } from './commands/remove-from-watching';
 import { clearExcludedProjectsList, updateExcludedProjects, updateExcludedProjectsResponseHandler } from './commands/update-excluded-projects';
@@ -18,7 +29,7 @@ const actionByChosenButton: Record<Button, (data: IMessageActionPayload) => void
 	[Button.AddToWatching]: addToWatching,
 	[Button.RemoveFromWatching]: removeFromWatching,
 	[Button.ShowWatching]: showList,
-	[Button.Check]: runCheck,
+	[Button.Check]: runManualCheck,
 	[Button.UpdateUsername]: updateUsername,
 	[Button.Cancel]: cancelCommand,
 	[Button.ExcludedProject]: updateExcludedProjects,
@@ -33,7 +44,7 @@ const responseHandlerByState: Partial<Record<ChatState, (data: IMessageResponseH
 };
 
 async function handleButtonClick(data: IMessageActionPayload, action: Button) {
-	const user = await User.findById(data.msg.chat.id);
+	const user = await User.findById(data.chatId);
 	if (!user || !user.gitlabUsername) {
 		updateUsername(data);
 		return;
@@ -97,7 +108,7 @@ async function main() {
 			return;
 		}
 
-		handleButtonClick({ msg: callbackQuery.message, bot }, action);
+		handleButtonClick({ chatId: callbackQuery.message.chat.id, bot }, action);
 		bot.answerCallbackQuery(callbackQuery.id);
 	});
 
@@ -114,7 +125,7 @@ async function main() {
 			await bot.sendMessage(chatId, 'Привет!👋');
 			const user = await User.findById(chatId);
 			if (!user) {
-				updateUsername({ msg, bot });
+				updateUsername({ chatId, bot });
 			} else {
 				sendChooseActionMsg(chatId, bot);
 			}
@@ -122,7 +133,7 @@ async function main() {
 		}
 
 		if (isPredefinedButton(text)) {
-			handleButtonClick({ msg, bot }, text);
+			handleButtonClick({ chatId, bot }, text);
 			return;
 		}
 
@@ -131,9 +142,24 @@ async function main() {
 		if (user) {
 			handleUserResponse(user, msg);
 		} else {
-			updateUsername({ msg, bot });
+			updateUsername({ chatId, bot });
 		}
 	});
 }
+
+async function sendUpdates() {
+	const allUsers = await User.find();
+
+	const sendMessagesRequests = allUsers.map(user => {
+		runCheck({ chatId: user.telegramId, bot, isManual: false });
+	});
+
+	await Promise.all(sendMessagesRequests);
+}
+
+// at 11 am daily from monday to friday
+schedule.scheduleJob('00 11 * * 1-5', function () {
+	sendUpdates();
+});
 
 main();

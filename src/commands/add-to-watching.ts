@@ -3,9 +3,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import { HydratedDocument } from 'mongoose';
 import User from '../models/user';
 
-export async function addToWatching({ msg, bot }: IMessageActionPayload) {
-	const chatId = msg.chat.id;
-
+export async function addToWatching({ chatId, bot }: IMessageActionPayload) {
 	await bot.sendMessage(
 		chatId,
 		'ℹ️ Укажи пути к файлам, которые необходимо добавить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: src/components/main.vue\n\rsrc/components',

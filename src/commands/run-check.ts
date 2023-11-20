@@ -6,10 +6,10 @@ function extractProjectKey(str: string): string {
 	return str.match(/\w{1,10}/)?.[0] || '';
 }
 
-export async function runCheck({ msg, bot }: IMessageActionPayload) {
-	const chatId = msg.chat.id;
-
-	await bot.sendMessage(chatId, '⏳ Запускаем проверку...');
+export async function runCheck({ chatId, bot, isManual }: IMessageActionPayload & { isManual?: boolean }) {
+	if (isManual) {
+		await bot.sendMessage(chatId, '⏳ Запускаем проверку... Это может занять несколько минут');
+	}
 
 	const user = await User.findById(chatId);
 
@@ -45,12 +45,19 @@ export async function runCheck({ msg, bot }: IMessageActionPayload) {
 		});
 	});
 
-	if (!result.size) {
+	if (!result.size && isManual) {
 		await bot.sendMessage(chatId, 'ℹ️ Список mr пуст');
 		return;
 	}
 	const textData = Array.from(result)
 		.map((mr, index) => `${index + 1}) <a href="${mr.web_url}">${mr.title}</a>`)
 		.join('\n');
-	await bot.sendMessage(chatId, `🎉 Список mr:\n${textData}`, { parse_mode: 'HTML' });
+
+	const title = isManual ? 'Список mr:' : 'В этих mr вносятся изменения в файлы, добавленные в наблюдаемые:';
+	console.log(`Sent list of ${result.size} MRs to user ${chatId}`);
+	await bot.sendMessage(chatId, `📄 ${title}\n${textData}`, { parse_mode: 'HTML' });
+}
+
+export async function runManualCheck({ chatId, bot }: IMessageActionPayload) {
+	runCheck({ chatId, bot, isManual: true });
 }

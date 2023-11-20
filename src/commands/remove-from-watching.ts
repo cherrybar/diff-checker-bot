@@ -1,8 +1,7 @@
 import { Button, ChatState, IMessageActionPayload } from '../types';
 import User from '../models/user';
 
-export async function removeFromWatching({ msg, bot }: IMessageActionPayload) {
-	const chatId = msg.chat.id;
+export async function removeFromWatching({ chatId, bot }: IMessageActionPayload) {
 	await bot.sendMessage(chatId, 'ℹ️ Укажи пути, которые необходимо удалить', {
 		reply_markup: {
 			inline_keyboard: [[{ text: 'Отмена', callback_data: Button.Cancel }]],

@@ -104,14 +104,12 @@ async function fetchDiffData(iid: number): Promise<IMergeRequestDiff[] | null> {
 export async function fetchListDiffData(iids: number[]): Promise<IMergeRequestWithDiffs[]> {
 	const diffList: IMergeRequestWithDiffs[] = [];
 
-	const fillDiffData = async (iid: number) => {
+	// run in sequence to prevent gitlab overloading
+	for (const iid of iids) {
 		const data = await fetchDiffData(iid);
 		if (data) {
 			diffList.push({ diff: data, iid });
 		}
-	};
-
-	await Promise.all(iids.map(fillDiffData));
-
+	}
 	return diffList;
 }

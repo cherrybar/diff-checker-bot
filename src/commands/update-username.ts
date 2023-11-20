@@ -3,8 +3,7 @@ import User from '../models/user';
 import TelegramBot from 'node-telegram-bot-api';
 import { HydratedDocument } from 'mongoose';
 
-export async function updateUsername({ msg, bot }: IMessageActionPayload) {
-	const chatId = msg.chat.id;
+export async function updateUsername({ chatId, bot }: IMessageActionPayload) {
 	const user = await User.findById(chatId);
 
 	const replyOptions = user?.gitlabUsername
@@ -14,12 +13,12 @@ export async function updateUsername({ msg, bot }: IMessageActionPayload) {
 				},
 		  }
 		: {};
-	const message = await bot.sendMessage(chatId, 'ℹ️ Укажи свой username в gitlab', replyOptions);
+	await bot.sendMessage(chatId, 'ℹ️ Укажи свой username в gitlab', replyOptions);
 
 	if (user) {
-		await user.updateOne({ state: ChatState.UsernameValidation, lastMessageId: message.message_id });
+		await user.updateOne({ state: ChatState.UsernameValidation });
 	} else {
-		const newUser = new User({ _id: chatId, telegramId: chatId, state: ChatState.UsernameValidation, lastMessageId: message.message_id });
+		const newUser = new User({ _id: chatId, telegramId: chatId, state: ChatState.UsernameValidation, excludedProjects: '' });
 		await newUser.save();
 	}
 }

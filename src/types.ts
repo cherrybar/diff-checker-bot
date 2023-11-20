@@ -136,7 +136,7 @@ export interface IMergeRequestWithDiffs {
 }
 
 export interface IMessageActionPayload {
-	msg: TelegramBot.Message;
+	chatId: number;
 	bot: TelegramBot;
 }
 
@@ -149,7 +149,7 @@ export interface IMessageResponseHandlerPayload {
 
 export interface IDbUser {
 	_id: string;
-	telegramId: string;
+	telegramId: number;
 	gitlabUsername?: string;
 	watchingPaths: string[];
 	state: ChatState;
