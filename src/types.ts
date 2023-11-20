@@ -6,7 +6,7 @@ export enum Button {
 	RemoveFromWatching = '/remove',
 	ShowWatching = '/show',
 	Check = '/check',
-	UpdateUsername = '/update-username',
+	UpdateUsername = '/update',
 	Cancel = '/cancel',
 }
 
@@ -127,8 +127,9 @@ export interface IMergeRequestDiff {
 	deleted_file: boolean;
 }
 
-export interface IMergeRequestWithDiffs extends IMergeRequestDiff {
+export interface IMergeRequestWithDiffs {
 	iid: number;
+	diff: IMergeRequestDiff[];
 }
 
 export interface IMessageActionPayload {
