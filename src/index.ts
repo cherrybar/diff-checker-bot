@@ -18,7 +18,7 @@ import {
 import { IDbUser } from './types';
 import { removeFromWatchingResponseHandler } from './commands/remove-from-watching';
 import { clearExcludedProjectsList, updateExcludedProjects, updateExcludedProjectsResponseHandler } from './commands/update-excluded-projects';
-import { manageSubscription, manageSubscriptionResponseHandler } from './commands/manage-subscription';
+import { manageSubscription, toggleSubscription } from './commands/manage-subscription';
 
 const botToken = process.env.TG_BOT_TOKEN as string;
 const mongodbURI = process.env.MONGODB_URI as string;
@@ -36,6 +36,7 @@ const actionByChosenButton: Partial<Record<Button, (data: IMessageActionPayload)
 	[Button.ExcludedProject]: updateExcludedProjects,
 	[Button.ClearList]: clearExcludedProjectsList,
 	[Button.ManageSubscription]: manageSubscription,
+	[Button.ToggleSubscription]: toggleSubscription,
 };
 
 const responseHandlerByState: Partial<Record<ChatState, (data: IMessageResponseHandlerPayload) => void>> = {
@@ -43,7 +44,6 @@ const responseHandlerByState: Partial<Record<ChatState, (data: IMessageResponseH
 	[ChatState.WaitingForDataToRemove]: removeFromWatchingResponseHandler,
 	[ChatState.UsernameValidation]: updateUsernameResponseHandler,
 	[ChatState.WaitingForExcludedProjects]: updateExcludedProjectsResponseHandler,
-	[ChatState.WaitingForSubscriptionToggle]: manageSubscriptionResponseHandler,
 };
 
 async function handleButtonClick(data: IMessageActionPayload, action: Button) {

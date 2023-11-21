@@ -9,23 +9,27 @@ export async function manageSubscription({ chatId, bot }: IMessageActionPayload)
 	}
 
 	const statusText = user.isSubscribed ? 'Ты подписан на ежедневные обновления.' : 'Ты не подписан на ежедневные обновления.';
-	const actionText = user.isSubscribed ? 'Для отписки напиши "отписаться"' : 'Для подписки напиши "подписаться"';
+	const actionText = user.isSubscribed ? 'Отписаться' : 'Подписаться';
 
-	await bot.sendMessage(chatId, `${statusText} ${actionText}`, {
+	await bot.sendMessage(chatId, statusText, {
 		reply_markup: {
-			inline_keyboard: [[{ text: 'Отмена', callback_data: Button.Cancel }]],
+			inline_keyboard: [
+				[
+					{ text: 'Отмена', callback_data: Button.Cancel },
+					{ text: actionText, callback_data: Button.ToggleSubscription },
+				],
+			],
 		},
 	});
-
-	await user.updateOne({ state: ChatState.WaitingForSubscriptionToggle });
 }
 
-export async function manageSubscriptionResponseHandler({ text, bot, chatId, user }: { text: string; bot: any; chatId: number; user: any }) {
-	const needToggle = (text.toLowerCase() === 'подписаться' && !user.isSubscribed) || (text.toLowerCase() === 'отписаться' && user.isSubscribed);
-	await user.updateOne({ state: ChatState.Default, isSubscribed: needToggle ? !user.isSubscribed : user.isSubscribed });
-
-	if (needToggle) {
-		const msg = user.isSubscribed ? '✅ Ты отписался от ежедневных обновлений' : '🎉 Теперь по будням в 11 утра тебе будет приходить письмо с обновлениями';
-		await bot.sendMessage(chatId, msg);
+export async function toggleSubscription({ bot, chatId }: IMessageActionPayload) {
+	const user = await User.findById(chatId);
+	if (!user) {
+		return;
 	}
+
+	await user.updateOne({ state: ChatState.Default, isSubscribed: !user.isSubscribed });
+	const msg = user.isSubscribed ? '✅ Ты отписался от ежедневных обновлений' : '🎉 Теперь по будням в 11 утра тебе будет приходить письмо с обновлениями';
+	await bot.sendMessage(chatId, msg);
 }

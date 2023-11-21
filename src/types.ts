@@ -11,6 +11,7 @@ export enum Button {
 	Cancel = '/cancel',
 	ClearList = '/clear_list',
 	ManageSubscription = '/manage_subscribe',
+	ToggleSubscription = '/toggle_subscribe',
 }
 
 export enum ChatState {
@@ -19,7 +20,6 @@ export enum ChatState {
 	WaitingForDataToAdd = 'waiting_for_add',
 	WaitingForDataToRemove = 'waiting_for_remove',
 	WaitingForExcludedProjects = 'waiting_for_excluded_projects',
-	WaitingForSubscriptionToggle = 'waiting_for_subscription_toggle',
 }
 
 export interface IMergeRequest {
