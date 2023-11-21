@@ -10,6 +10,7 @@ import {
 	removeFromWatching,
 	showList,
 	runManualCheck,
+	runAutoCheck,
 	updateUsername,
 	updateUsernameResponseHandler,
 	cancelCommand,
@@ -18,7 +19,6 @@ import { IDbUser } from './types';
 import { removeFromWatchingResponseHandler } from './commands/remove-from-watching';
 import { clearExcludedProjectsList, updateExcludedProjects, updateExcludedProjectsResponseHandler } from './commands/update-excluded-projects';
 import { manageSubscription, manageSubscriptionResponseHandler } from './commands/manage-subscription';
-import { runAutoCheck } from './commands/run-check';
 
 const botToken = process.env.TG_BOT_TOKEN as string;
 const mongodbURI = process.env.MONGODB_URI as string;
