@@ -18,7 +18,7 @@ export async function updateUsername({ chatId, bot }: IMessageActionPayload) {
 	if (user) {
 		await user.updateOne({ state: ChatState.UsernameValidation });
 	} else {
-		const newUser = new User({ _id: chatId, telegramId: chatId, state: ChatState.UsernameValidation, excludedProjects: '' });
+		const newUser = new User({ _id: chatId, telegramId: chatId, state: ChatState.UsernameValidation, excludedProjects: '', isSubscribed: false });
 		await newUser.save();
 	}
 }
