@@ -2,7 +2,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import mongoose, { HydratedDocument } from 'mongoose';
 import * as process from 'process';
 import schedule from 'node-schedule';
-import { Button, ChatState, IMessageActionPayload, IMessageResponseHandlerPayload } from './types';
+import { Button, ChatState, IMessageActionPayload, IMessageResponseHandlerPayload, IDbUser } from './types';
 import User from './models/user';
 import {
 	addToWatching,
@@ -14,11 +14,13 @@ import {
 	updateUsername,
 	updateUsernameResponseHandler,
 	cancelCommand,
+	removeFromWatchingResponseHandler,
+	clearExcludedProjectsList,
+	updateExcludedProjects,
+	updateExcludedProjectsResponseHandler,
+	manageSubscription,
+	toggleSubscription,
 } from './commands';
-import { IDbUser } from './types';
-import { removeFromWatchingResponseHandler } from './commands/remove-from-watching';
-import { clearExcludedProjectsList, updateExcludedProjects, updateExcludedProjectsResponseHandler } from './commands/update-excluded-projects';
-import { manageSubscription, toggleSubscription } from './commands/manage-subscription';
 
 const botToken = process.env.TG_BOT_TOKEN as string;
 const mongodbURI = process.env.MONGODB_URI as string;
@@ -46,6 +48,16 @@ const responseHandlerByState: Partial<Record<ChatState, (data: IMessageResponseH
 	[ChatState.WaitingForExcludedProjects]: updateExcludedProjectsResponseHandler,
 };
 
+const buttons: { title: string; value: Button }[] = [
+	{ title: 'Запустить проверку', value: Button.Check },
+	{ title: 'Добавить файлы для наблюдения', value: Button.AddToWatching },
+	{ title: 'Удалить файлы из наблюдаемых', value: Button.RemoveFromWatching },
+	{ title: 'Показать список наблюдаемых файлов', value: Button.ShowWatching },
+	{ title: 'Изменить username', value: Button.UpdateUsername },
+	{ title: 'Изменить список проектов-исключений', value: Button.ExcludedProject },
+	{ title: 'Управлять подпиской на обновления', value: Button.ManageSubscription },
+];
+
 async function handleButtonClick(data: IMessageActionPayload, action: Button) {
 	const user = await User.findById(data.chatId);
 	if (!user || !user.gitlabUsername) {
@@ -66,15 +78,7 @@ function isPredefinedButton(value: any): value is Button {
 async function sendChooseActionMsg(chatId: number, bot: TelegramBot) {
 	await bot.sendMessage(chatId, 'Выбери команду из списка ниже', {
 		reply_markup: {
-			inline_keyboard: [
-				[{ text: 'Запустить проверку', callback_data: Button.Check }],
-				[{ text: 'Добавить файлы для наблюдения', callback_data: Button.AddToWatching }],
-				[{ text: 'Удалить файлы из наблюдаемых', callback_data: Button.RemoveFromWatching }],
-				[{ text: 'Показать список наблюдаемых файлов', callback_data: Button.ShowWatching }],
-				[{ text: 'Изменить username', callback_data: Button.UpdateUsername }],
-				[{ text: 'Изменить список проектов-исключений', callback_data: Button.ExcludedProject }],
-				[{ text: 'Управлять подпиской на обновления', callback_data: Button.ManageSubscription }],
-			],
+			inline_keyboard: buttons.map(action => [{ text: action.title, callback_data: action.value }]),
 		},
 	});
 }
@@ -93,15 +97,7 @@ async function handleUserResponse(user: HydratedDocument<IDbUser>, msg: Telegram
 }
 
 async function main() {
-	const commands = [
-		{ command: Button.Check, description: 'Запустить проверку' },
-		{ command: Button.AddToWatching, description: 'Добавить файлы для наблюдения' },
-		{ command: Button.RemoveFromWatching, description: 'Удалить файлы из наблюдаемых' },
-		{ command: Button.ShowWatching, description: 'Показать список наблюдаемых файлов' },
-		{ command: Button.UpdateUsername, description: 'Изменить username' },
-		{ command: Button.ExcludedProject, description: 'Изменить список проектов-исключений' },
-		{ command: Button.ManageSubscription, description: 'Управлять подпиской на обновления' },
-	];
+	const commands = buttons.map(action => ({ command: action.value, description: action.title }));
 
 	bot.setMyCommands(commands);
 
@@ -156,17 +152,13 @@ async function main() {
 	});
 }
 
-async function sendUpdates() {
+schedule.scheduleJob({ rule: process.env.SCHEDULER_RULE, tz: 'Europe/Moscow' }, async () => {
 	const allUsers = await User.find({ isSubscribed: true, $where: 'this.watchingPaths.length > 0' });
 
 	runAutoCheck(
 		bot,
 		allUsers.map(user => user.telegramId),
 	);
-}
-
-schedule.scheduleJob({ rule: process.env.SCHEDULER_RULE, tz: 'Europe/Moscow' }, function () {
-	sendUpdates();
 });
 
 main();
