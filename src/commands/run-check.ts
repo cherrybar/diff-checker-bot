@@ -1,12 +1,19 @@
-import { IMergeRequest, IMessageActionPayload } from '../types';
+import { IMergeRequest, IMergeRequestWithDiffs, IMessageActionPayload } from '../types';
 import { fetchAllMrs, fetchListDiffData } from '../services/gitlab';
 import User from '../models/user';
+import TelegramBot from 'node-telegram-bot-api';
 
 function extractProjectKey(str: string): string {
 	return str.match(/\w{1,10}/)?.[0] || '';
 }
 
-export async function runCheck({ chatId, bot, isManual }: IMessageActionPayload & { isManual?: boolean }) {
+export async function runCheck({
+	chatId,
+	bot,
+	isManual,
+	diffData,
+	mrList,
+}: IMessageActionPayload & { isManual?: boolean; diffData: IMergeRequestWithDiffs[]; mrList: IMergeRequest[] }) {
 	const user = await User.findById(chatId);
 
 	if (!user) {
@@ -21,17 +28,18 @@ export async function runCheck({ chatId, bot, isManual }: IMessageActionPayload 
 		await bot.sendMessage(chatId, '⏳ Запускаем проверку... Это может занять несколько минут');
 	}
 
-	const mrList = await fetchAllMrs({ 'not[author_username]': user.gitlabUsername });
-	const data = await fetchListDiffData(mrList.map(mr => mr.iid));
-
 	const result: Set<IMergeRequest> = new Set();
 
 	const watchingDirectories = user.watchingPaths.filter(path => !path.match(/^(.*\/)?([^/]+)\.(ts|vue)$/i));
 	const watchingFiles = user.watchingPaths.filter(path => !watchingDirectories.includes(path));
 	const excludedProjects = user.excludedProjects.split(', ');
 
-	data.forEach(mrWithDiffs => {
+	diffData.forEach(mrWithDiffs => {
 		const mr = mrList.find(el => el.iid === mrWithDiffs.iid)!;
+		if (mr.author.username === user.gitlabUsername) {
+			return;
+		}
+
 		const projectKey = extractProjectKey(mr.title);
 		if (excludedProjects.includes(projectKey)) {
 			return;
@@ -62,6 +70,23 @@ export async function runCheck({ chatId, bot, isManual }: IMessageActionPayload 
 	await bot.sendMessage(chatId, `📄 ${title}\n${textData}`, { parse_mode: 'HTML' });
 }
 
+export async function runAutoCheck(bot: TelegramBot, userIds: number[]) {
+	const mrList = await fetchAllMrs();
+	const diffData = await fetchListDiffData(mrList.map(mr => mr.iid));
+
+	const sendMessagesRequests = userIds.map(id => {
+		runCheck({ chatId: id, bot, isManual: false, mrList, diffData });
+	});
+
+	await Promise.all(sendMessagesRequests);
+}
+
 export async function runManualCheck({ chatId, bot }: IMessageActionPayload) {
-	runCheck({ chatId, bot, isManual: true });
+	const user = await User.findById(chatId);
+	if (!user) {
+		return;
+	}
+	const mrList = await fetchAllMrs({ 'not[author_username]': user.gitlabUsername });
+	const diffData = await fetchListDiffData(mrList.map(mr => mr.iid));
+	runCheck({ chatId, bot, isManual: true, mrList, diffData });
 }

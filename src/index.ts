@@ -9,7 +9,6 @@ import {
 	addToWatchingResponseHandler,
 	removeFromWatching,
 	showList,
-	runCheck,
 	runManualCheck,
 	updateUsername,
 	updateUsernameResponseHandler,
@@ -19,6 +18,7 @@ import { IDbUser } from './types';
 import { removeFromWatchingResponseHandler } from './commands/remove-from-watching';
 import { clearExcludedProjectsList, updateExcludedProjects, updateExcludedProjectsResponseHandler } from './commands/update-excluded-projects';
 import { manageSubscription, manageSubscriptionResponseHandler } from './commands/manage-subscription';
+import { runAutoCheck } from './commands/run-check';
 
 const botToken = process.env.TG_BOT_TOKEN as string;
 const mongodbURI = process.env.MONGODB_URI as string;
@@ -159,15 +159,13 @@ async function main() {
 async function sendUpdates() {
 	const allUsers = await User.find({ isSubscribed: true, $where: 'this.watchingPaths.length > 0' });
 
-	const sendMessagesRequests = allUsers.map(user => {
-		runCheck({ chatId: user.telegramId, bot, isManual: false });
-	});
-
-	await Promise.all(sendMessagesRequests);
+	runAutoCheck(
+		bot,
+		allUsers.map(user => user.telegramId),
+	);
 }
 
-// at 11 am daily from monday to friday
-schedule.scheduleJob('00 11 * * 1-5', function () {
+schedule.scheduleJob({ rule: process.env.SCHEDULER_RULE, tz: 'Europe/Moscow' }, function () {
 	sendUpdates();
 });
 
