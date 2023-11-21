@@ -13,12 +13,7 @@ export async function manageSubscription({ chatId, bot }: IMessageActionPayload)
 
 	await bot.sendMessage(chatId, statusText, {
 		reply_markup: {
-			inline_keyboard: [
-				[
-					{ text: 'Отмена', callback_data: Button.Cancel },
-					{ text: actionText, callback_data: Button.ToggleSubscription },
-				],
-			],
+			inline_keyboard: [[{ text: actionText, callback_data: Button.ToggleSubscription }]],
 		},
 	});
 }
