@@ -20,14 +20,6 @@ export async function runCheck({
 		return;
 	}
 
-	if (isManual) {
-		if (!user.watchingPaths.length) {
-			await bot.sendMessage(chatId, '⚠️ Сначала нужно добавить файлы для наблюдения');
-			return;
-		}
-		await bot.sendMessage(chatId, '⏳ Запускаем проверку... Это может занять несколько минут');
-	}
-
 	const result: Set<IMergeRequest> = new Set();
 
 	const watchingDirectories = user.watchingPaths.filter(path => !path.match(/^(.*\/)?([^/]+)\.(ts|vue)$/i));
@@ -86,6 +78,13 @@ export async function runManualCheck({ chatId, bot }: IMessageActionPayload) {
 	if (!user) {
 		return;
 	}
+
+	if (!user.watchingPaths.length) {
+		await bot.sendMessage(chatId, '⚠️ Сначала нужно добавить файлы для наблюдения');
+		return;
+	}
+	await bot.sendMessage(chatId, '⏳ Запускаем проверку... Это может занять несколько минут');
+
 	const mrList = await fetchAllMrs({ 'not[author_username]': user.gitlabUsername });
 	const diffData = await fetchListDiffData(mrList.map(mr => mr.iid));
 	runCheck({ chatId, bot, isManual: true, mrList, diffData });
