@@ -6,7 +6,7 @@ import User from '../models/user';
 export async function addToWatching({ chatId, bot }: IMessageActionPayload) {
 	await bot.sendMessage(
 		chatId,
-		'ℹ️ Укажи пути к файлам, которые необходимо добавить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: src/components/main.vue\n\rsrc/components',
+		'ℹ️ Укажи пути к файлам, которые необходимо добавить. Можно указать как отдельные файлы, так и директории. Каждый путь должен начинаться с новой строки. Пример: \n\rsrc/components/main.vue\n\rsrc/components',
 		{
 			reply_markup: {
 				inline_keyboard: [[{ text: 'Отмена', callback_data: Button.Cancel }]],
