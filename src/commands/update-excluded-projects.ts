@@ -6,7 +6,7 @@ import User from '../models/user';
 export async function updateExcludedProjects({ chatId, bot }: IMessageActionPayload) {
 	const user = await User.findById(chatId);
 
-	const info = user && user.excludedProjects.length ? `Текущий список проектов исключений: <i>${user.excludedProjects}</i>\n` : '';
+	const info = user && user.excludedProjects.length ? `Текущий список проектов исключений: <i>${user.excludedProjects}</i>.\n` : '';
 	const text = 'Укажи через запятую ключи проектов, mr которых нужно исключать при поиске. Например:\nCTSMM, PCRD\n';
 
 	await bot.sendMessage(chatId, `ℹ️ ${info}${text}`, {
